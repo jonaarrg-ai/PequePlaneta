@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Peque Planeta 🌱</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #F2F8F2;
+      font-family: 'Comic Neue', sans-serif;
+    }
+    .timeline-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      font-size: 12px;
+    }
+    .timeline-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 4px;
+      transition: all 0.3s ease;
+    }
+    .timeline-icon.active {
+      background-color: #A3D9A5;
+      transform: scale(1.2);
+    }
+    .mission-btn {
+      background-color: #A3D9A5;
+      color: #fff;
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 14px;
+      margin: 4px;
+      transition: background-color 0.3s;
+    }
+    .mission-btn:disabled {
+      background-color: #D6EBD7;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+
+    const etapasTomate = [
+      { nombre: "Siembra", dias: 0, icono: "🌱" },
+      { nombre: "Brote", dias: 5, icono: "🌿" },
+      { nombre: "Plantín", dias: 20, icono: "🪴" },
+      { nombre: "Floración", dias: 60, icono: "🌻" },
+      { nombre: "Cosecha", dias: 90, icono: "🍅" }
+    ];
+
+    function App() {
+      const [plantado, setPlantado] = React.useState(false);
+      const [fechaPlantacion, setFechaPlantacion] = React.useState(null);
+      const [etapaActual, setEtapaActual] = React.useState(0);
+      const [misiones, setMisiones] = React.useState({
+        regar: false,
+        sol: false,
+        trasplantar: false
+      });
+
+      React.useEffect(() => {
+        if (plantado && fechaPlantacion) {
+          const hoy = new Date();
+          const diff = Math.floor((hoy - new Date(fechaPlantacion)) / (1000 * 60 * 60 * 24));
+          const nuevaEtapa = etapasTomate.reduce((acc, etapa, idx) => {
+            return diff >= etapa.dias ? idx : acc;
+          }, 0);
+          setEtapaActual(nuevaEtapa);
+        }
+      }, [plantado, fechaPlantacion]);
+
+      const plantarTomate = () => {
+        const fecha = new Date().toISOString().split("T")[0];
+        setFechaPlantacion(fecha);
+        setPlantado(true);
+      };
+
+      const completarMision = (tipo) => {
+        setMisiones(prev => ({ ...prev, [tipo]: true }));
+        // Cada vez que completa misión, recalculamos etapa automáticamente
+        const hoy = new Date();
+        const diff = Math.floor((hoy - new Date(fechaPlantacion)) / (1000 * 60 * 60 * 24));
+        const nuevaEtapa = etapasTomate.reduce((acc, etapa, idx) => {
+          return diff >= etapa.dias ? idx : acc;
+        }, 0);
+        setEtapaActual(nuevaEtapa);
+      };
+
+      return (
+        <div className="max-w-sm mx-auto h-screen flex flex-col items-center justify-start p-4">
+          {!plantado ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <h1 className="text-3xl mb-6 font-bold text-green-700">🌍 Peque Planeta</h1>
+              <p className="mb-4 text-center text-gray-600">¡Bienvenido! Vamos a plantar tu primer tomate 🍅</p>
+              <button onClick={plantarTomate} className="bg-green-500 text-white px-6 py-3 rounded-xl text-lg shadow">
+                Plantar Tomate
+              </button>
+            </div>
+          ) : (
+            <div className="w-full flex flex-col items-center">
+              <h2 className="text-2xl font-semibold mb-2 text-green-700">Tu Tomate 🍅</h2>
+              <p className="text-gray-600 mb-4">
+                Plantado el <strong>{fechaPlantacion}</strong>
+              </p>
+
+              {/* Timeline */}
+              <div className="w-full flex justify-between mb-6">
+                {etapasTomate.map((etapa, idx) => (
+                  <div key={etapa.nombre} className="timeline-step">
+                    <div className={`timeline-icon ${idx <= etapaActual ? "active" : ""}`}>
+                      {etapa.icono}
+                    </div>
+                    <span>{etapa.nombre}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Misiones */}
+              <div className="flex flex-col items-center w-full">
+                <h3 className="text-lg font-medium text-green-700 mb-2">Misiones de hoy 🌞</h3>
+                <div className="flex flex-wrap justify-center">
+                  <button
+                    className="mission-btn"
+                    disabled={misiones.regar}
+                    onClick={() => completarMision("regar")}
+                  >
+                    💧 Regar
+                  </button>
+                  <button
+                    className="mission-btn"
+                    disabled={misiones.sol}
+                    onClick={() => completarMision("sol")}
+                  >
+                    ☀️ Exponer al sol
+                  </button>
+                  <button
+                    className="mission-btn"
+                    disabled={misiones.trasplantar}
+                    onClick={() => completarMision("trasplantar")}
+                  >
+                    🪴 Trasplantar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
